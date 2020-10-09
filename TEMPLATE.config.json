@@ -1,0 +1,4 @@
+{
+	"token": "{INSERT YOUR TOKEN HERE}",
+	"prefix": "!" // Change the prefix you want the command to start with
+}

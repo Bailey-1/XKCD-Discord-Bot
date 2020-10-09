@@ -1,7 +1,7 @@
 const Discord = require('discord.js');
 const Axios = require('axios');
 
-require('dotenv').config();
+const { prefix, token, channels } = require('./config.json');
 
 const client = new Discord.Client();
 
@@ -10,18 +10,30 @@ client.on('ready', () => {
 });
 
 client.on('message', async (msg) => {
-	const msgContent = msg.toString().split(' ');
+	console.log(msg);
+	console.log(msg.channel.id);
 
-	if (msgContent[0] === '!xkcd') {
-		console.log('[msgContent[0] = !xkcd]');
-		let data = await getCurrentComic();
-		let alertMsg;
+	// Check if the message is in a valid channel - if not it returns instantly
+	if (channels.includes(msg.channel.id.toString()) == false) {
+		console.log('returning');
+		return;
+	}
+	const msgContent = msg.toString().trim().toLowerCase().split(' ');
+
+	if (msgContent[0] === `${prefix}xkcd`) {
+		console.log(`[msgContent[0] = ${prefix}xkcd]`);
+		let data = await getCurrentComic(); // Request most recent comic since you can use it to work out total number of comics
+		let alertMsg; // Define alertMsg which is used to return errors and messages to the user
+
+		// Probably should use arguments but not a huge deal since they are only 1 word long
 
 		switch (msgContent[1]) {
+			// !xkcd
 			case undefined:
 				console.log('[case undefined] - returning current');
 				break;
 
+			// !xkcd random
 			case 'random':
 				const randNum = Math.floor(Math.random() * (data.num + 1));
 				console.log('[case random] - returning comic ', randNum);
@@ -30,20 +42,29 @@ client.on('message', async (msg) => {
 				break;
 
 			case 'help':
+				console.log('[case help] - returning help alert');
 				alertMsg =
 					'__**Help:**__ \n`!xkcd` - returns most recent comic.\n`!xkcd {number}` - returns specific comic by number.\n`!xkcd random` - returns random comic';
 				break;
 
 			default:
+				// Check if the string is a valid number and if it is check to see if it is a valid comic number
 				if (isNumber(msgContent[1])) {
+					// Check if the number is 0 or below
 					if (msgContent[1] <= 0) {
 						alertMsg = `[error]: Nice try but I'm too smart for you!`;
+
+						// Check to see if the number is below or equal to most current num
 					} else if (msgContent[1] <= data.num) {
 						data = await getComicByNum(msgContent[1]);
+
+						// Return error since the number is greater than the max number
 					} else {
 						alertMsg =
 							'[error]: Number specified is too large! Try a smaller one!';
 					}
+
+					// Not a valid number so return an error
 				} else {
 					console.log('[case default]');
 					// console.log('[msgContent[1] is not valid]');
@@ -86,4 +107,4 @@ function isNumber(n) {
 	return !isNaN(parseFloat(n)) && !isNaN(n - 0);
 }
 
-client.login(process.env.BOT_TOKEN);
+client.login(token);
