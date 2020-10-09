@@ -1,6 +1,8 @@
 const Discord = require('discord.js');
 const Axios = require('axios');
 
+require('dotenv').config();
+
 const client = new Discord.Client();
 
 client.on('ready', () => {
@@ -8,9 +10,13 @@ client.on('ready', () => {
 });
 
 client.on('message', (msg) => {
-	if (msg.content === 'ping') {
-		msg.reply('pong');
+	if (msg.content === '!xkcd') {
+		Axios.get('http://xkcd.com/info.0.json').then((response) => {
+			console.log(response.data);
+			//msg.reply(JSON.stringify(response.data));
+			msg.channel.send(response.data.alt, { files: [response.data.img] });
+		});
 	}
 });
 
-client.login('NzMzODQ0OTg2NDk1MzY5MzIy.XxJEZg.5BoFfKtLtpSAjScG-ydH7avk9Yc');
+client.login(process.env.BOT_TOKEN);
