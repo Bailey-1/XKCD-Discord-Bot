@@ -10,30 +10,25 @@ client.on('ready', () => {
 });
 
 client.on('message', async (msg) => {
-	console.log(msg);
-	console.log(msg.channel.id);
-
-	// Check if the message is in a valid channel - if not it returns instantly
-	if (channels.includes(msg.channel.id.toString()) == false) {
-		console.log('returning');
+	// Check if the message is in a valid channel and check that it starts with prefix - if not it returns instantly
+	if (
+		!msg.content.startsWith(prefix) ||
+		channels.includes(msg.channel.id) == false
+	)
 		return;
-	}
-	const msgContent = msg.toString().trim().toLowerCase().split(' ');
 
-	if (msgContent[0] === `${prefix}xkcd`) {
-		console.log(`[msgContent[0] = ${prefix}xkcd]`);
+	const args = msg.content.slice(prefix.length).trim().toLowerCase().split(' ');
+	const command = args.shift();
+
+	if (command === `xkcd`) {
 		let data = await getCurrentComic(); // Request most recent comic since you can use it to work out total number of comics
 		let alertMsg; // Define alertMsg which is used to return errors and messages to the user
 
-		// Probably should use arguments but not a huge deal since they are only 1 word long
-
-		switch (msgContent[1]) {
-			// !xkcd
+		switch (args[0]) {
 			case undefined:
 				console.log('[case undefined] - returning current');
 				break;
 
-			// !xkcd random
 			case 'random':
 				const randNum = Math.floor(Math.random() * (data.num + 1));
 				console.log('[case random] - returning comic ', randNum);
@@ -47,16 +42,17 @@ client.on('message', async (msg) => {
 					'__**Help:**__ \n`!xkcd` - returns most recent comic.\n`!xkcd {number}` - returns specific comic by number.\n`!xkcd random` - returns random comic';
 				break;
 
+			// Check to see if args[0] is a number
 			default:
 				// Check if the string is a valid number and if it is check to see if it is a valid comic number
-				if (isNumber(msgContent[1])) {
+				if (isNumber(args[0])) {
 					// Check if the number is 0 or below
-					if (msgContent[1] <= 0) {
+					if (args[0] <= 0) {
 						alertMsg = `[error]: Nice try but I'm too smart for you!`;
 
 						// Check to see if the number is below or equal to most current num
-					} else if (msgContent[1] <= data.num) {
-						data = await getComicByNum(msgContent[1]);
+					} else if (args[0] <= data.num) {
+						data = await getComicByNum(args[0]);
 
 						// Return error since the number is greater than the max number
 					} else {
@@ -66,14 +62,11 @@ client.on('message', async (msg) => {
 
 					// Not a valid number so return an error
 				} else {
-					console.log('[case default]');
-					// console.log('[msgContent[1] is not valid]');
 					alertMsg = '[error]: Something went wrong! Unknown Command.';
 				}
 		}
 
-		// console.log('data: ', data);
-
+		// Check to see if alertMsg has been set and if it has sent alertMsg instead.
 		if (alertMsg) {
 			msg.channel.send(alertMsg);
 		} else {
@@ -102,7 +95,7 @@ async function getComicByNum(num) {
 	return response.data;
 }
 
-// https://stackoverflow.com/a/1421988/11213488
+// Credit: https://stackoverflow.com/a/1421988/11213488
 function isNumber(n) {
 	return !isNaN(parseFloat(n)) && !isNaN(n - 0);
 }
